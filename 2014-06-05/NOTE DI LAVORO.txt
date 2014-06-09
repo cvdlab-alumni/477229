@@ -1,0 +1,3 @@
+1) Non ho rispettato tutte le specifiche che sono state date sugli angoli per evitare che la lampada entrasse
+nel piano.
+2) Ho usato un font diverso per la scritta, quindi l'ho aggiunto nella cartella per renderlo fruibile.

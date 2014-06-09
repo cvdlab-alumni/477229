@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html>
+ <head> 
+  <title>LampadaPixar</title> 
+  <style>
+    body{
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #stats {  /* Align stats top-left */
+      position: absolute;
+      left: 0px;
+      top: 0px;
+    }
+  </style> 
+  </head>
+  <body>
+  <!-- JavaScript libraries -->
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> 
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/three.js/r67/three.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/stats.js/r11/Stats.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5/dat.gui.min.js"></script>
+  <script src="assets/libs/TrackballControls.js"></script>
+  <script type="text/javascript" src="assets/fonts/alex_brush_regular.typeface.js"></script>
+  <script src="assets/libs/tween.min.js"></script>
+  <script src="assets/libs/keyframe.js"></script>
+  <!-- Javascript code that runs our Three.js examples --> 
+  <script>
+    // once everything is loaded, we run our Three.js stuff.
+    $(function () {
+
+      var stats = initStats();
+
+      // create a scene, that will hold all our elements such as objects, cameras and lights.
+      var scene = new THREE.Scene();
+
+      // create a camera, which defines where we're looking at.
+      var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+	  
+	  // create a inspectedCamera
+      var inspectedCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+	  
+      // create a render and set the size
+      var renderer = new THREE.WebGLRenderer();
+
+      // create trackball controls
+      var trackballControls = new THREE.TrackballControls(camera);
+
+      renderer.setClearColor(new THREE.Color(0xaccffe, 1.0));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+	  renderer.shadowMapEnabled = true;
+	  
+	  var planeGeometry = new THREE.PlaneGeometry(500,500,50,50);
+	  var planeMaterial = new THREE.MeshLambertMaterial({color: 0xacdffe, side: THREE.DoubleSide});
+	  var plane = new THREE.Mesh(planeGeometry,planeMaterial);
+	  plane.rotation.x = -Math.PI/2;
+	  plane.receiveShadow = true;
+	  scene.add(plane);
+
+	  function createCylinder(radius,radius,height,segments,color){
+		var cylinderGeometry = new THREE.CylinderGeometry(radius,radius,height,segments);
+		var cylinderMaterial = new THREE.MeshLambertMaterial({color: color});
+		var cylinder = new THREE.Mesh(cylinderGeometry,cylinderMaterial);
+		cylinder.castShadow = true;
+		cylinder.receiveShadow = true;
+		return cylinder;
+	  };
+	  
+	  function createSphere(radius,segments,startSigma,endSigma,startTheta,endTheta,color){
+		var sphereGeometry = new THREE.SphereGeometry(radius,segments,segments,startSigma,endSigma,startTheta,endTheta);
+		var sphereMaterial = new THREE.MeshLambertMaterial({color: color});
+		var sphere = new THREE.Mesh(sphereGeometry,sphereMaterial);
+		sphere.castShadow = true;
+		return sphere;
+	  };
+	  
+	  function createBox(x,y,z,color){
+		var boxGeometry = new THREE.BoxGeometry(x,y,z);
+		var boxMaterial = new THREE.MeshLambertMaterial({color: color});
+		var box = new THREE.Mesh(boxGeometry,boxMaterial);
+		box.castShadow = true;
+		box.receiveShadow = true;
+		return box;
+	  };
+	  
+	  function createArm(){
+		var semiArm1 = new THREE.Object3D();
+		
+		var braccioParte1 = createBox(1,8,1,0xC0C0C0);
+		braccioParte1.rotation.z = Math.PI/4;
+		braccioParte1.position.x = -2.5;
+		
+		var braccioParte2 = createBox(1,8,1,0xC0C0C0);
+		braccioParte2.rotation.z = -Math.PI/4;
+		braccioParte2.position.x = 2.5;
+		braccioParte2.position.z = 1;
+
+		var braccioParte3 = createBox(1,8,1,0xC0C0C0);
+		braccioParte3.rotation.z = -Math.PI/4;
+		braccioParte3.position.x = 2.5;
+		braccioParte3.position.z = -1;
+
+		var pernoBraccio1 = createCylinder(0.3,0.3,3.6,10,0xcc3300);
+		pernoBraccio1.rotation.x = Math.PI/2;
+		pernoBraccio1.position.y = -2.5;
+		
+		var pernoBraccio2 = createCylinder(0.3,0.3,3.6,10,0xcc3300);
+		pernoBraccio2.rotation.x = Math.PI/2;
+		pernoBraccio2.position.y = 2.5;
+		pernoBraccio2.position.x = 5;
+		
+		semiArm1.add(braccioParte1);
+		semiArm1.add(braccioParte2);
+		semiArm1.add(braccioParte3);
+		semiArm1.add(pernoBraccio1);
+		semiArm1.add(pernoBraccio2);
+		semiArm1.position.y = -2.5;
+		
+		var semiArm2 = semiArm1.clone();
+		semiArm2.rotation.z = Math.PI;
+		semiArm2.position.y = 2.5;
+		
+		var arm = new THREE.Object3D();
+		arm.add(semiArm1);
+		arm.add(semiArm2);
+		arm.position.y = 5;
+		return arm;
+	  };
+		
+	  var arm1 = new THREE.Object3D();
+	  arm1.add(createArm());
+	  arm1.position.y = 3;
+		
+	  var arm2 = new THREE.Object3D();
+	  arm1.add(arm2);
+	  arm2.position.y = 10;
+	  arm2.add(createArm());
+
+	  var baseCompleta = new THREE.Object3D();
+	  scene.add(baseCompleta);
+
+	  var base = createCylinder(12,12,2,50,0xC0C0C0);
+	  base.position.set(0,1,0);
+	  
+	  var pernoBase = createCylinder(0.3,0.3,2,10,0xC0C0C0);
+	  pernoBase.position.y = 2;
+	  
+	  baseCompleta.add(base);
+	  baseCompleta.add(arm1);
+	  baseCompleta.add(pernoBase);
+	  
+	  var paralume = new THREE.Object3D();
+	 
+	  var cupolaGrande = createSphere(10,50,0,2*Math.PI,Math.PI/2,Math.PI/3,0xC0C0C0);
+	  cupolaGrande.position.set(0,12,0);
+	  cupolaGrande.material.side = 2;
+	  
+	  var centroParalume = createCylinder(5.1,5.1,3,50,0xC0C0C0);
+	  centroParalume.position.set(0,2,0);
+	  
+	  cupolaPiccola = createSphere(5.13,50,0,2*Math.PI,Math.PI/2,Math.PI/2,0xC0C0C0);
+	  cupolaPiccola.position.set(0,1,0);
+	  
+	  var pernoParalume = createCylinder(0.3,0.3,3,10,0xC0C0C0);
+	  pernoParalume.position.y = 2;
+	
+	  lampadina = createSphere(4,20,0,2*Math.PI,0,Math.PI,0xffffff);
+	  lampadina.material.side = 1;
+	  lampadina.material.transparent = true;
+	  lampadina.material.opacity = 1;
+	  lampadina.position.set(0,7,0);
+
+	  var target = createSphere(1,1,0,2*Math.PI,0,Math.PI,0xffffff);
+	  target.material.transparent = true;
+	  target.material.opacity = 0;
+	  target.position.set(0,20,0);
+	  
+	  var spotLight = new THREE.SpotLight( 0xffffff,1.5,-500);
+	  spotLight.position.set(0,6,0);
+	  spotLight.target = target;
+	  spotLight.castShadow = true;
+	  spotLight.shadowCameraNear = 1;
+      spotLight.shadowCameraFar = 1000;
+      spotLight.shadowCameraFov = 70;
+      spotLight.shadowMapWidth = 512;
+      spotLight.shadowMapHeight = 512;
+      spotLight.shadow;
+	  
+	  var pointLight = new THREE.PointLight(0xffffff,10,6.3);
+	  pointLight.position.set(0,8,0);
+	  
+	  paralume.add(cupolaGrande);
+	  paralume.add(cupolaPiccola);
+	  paralume.add(centroParalume);
+	  paralume.add(lampadina);
+	  paralume.add(spotLight);
+	  paralume.add(target);
+	  paralume.add(pointLight);
+	  paralume.position.y = 7;
+	  paralume.rotation.z = Math.PI/2;
+	  
+	  var paralumeCompleto = new THREE.Object3D();
+	  paralumeCompleto.add(pernoParalume);
+	  paralumeCompleto.add(paralume);
+	  paralumeCompleto.position.y = 10;
+	  
+	  arm2.add(paralumeCompleto);
+	  
+	  var options = {
+            size: 30,
+            height: 2,
+            weight: "normal",
+            font: "alex brush",
+            bevelThickness: 2,
+            bevelSize: 0.5,
+            bevelSegments: 3,
+            bevelEnabled: true,
+            curveSegments: 12,
+            steps: 1
+      };
+		
+	  var testo = new THREE.Object3D();
+	  testo.position.set(-150,5,-50);
+	  scene.add(testo);
+		
+	  var distance = 0;
+		
+	  function creaLettera(letter){
+		distance += 40;
+		var textGeometry = new THREE.TextGeometry( letter, options);
+		var textMaterial = new THREE.MeshPhongMaterial({color: 0x000000});
+		var textMesh = new THREE.Mesh( textGeometry, textMaterial );
+		textMesh.castShadow = true;
+		textMesh.position.x = distance;
+		testo.add(textMesh);
+		return textMesh;
+  	  };
+		
+	  var letterC = creaLettera('C');
+	  var letterV = creaLettera('V');
+	  var letterD = creaLettera('D');
+	  var letterL = creaLettera('L');
+	  var letterA = creaLettera('A');
+	  var letterB = creaLettera('B');
+		
+      // position and point the camera to the center of the scene
+      camera.position.set(-200,180,200);
+      camera.up = new THREE.Vector3(0,1,0);
+      camera.lookAt(scene.position);
+	  
+	  // position and point the camera to the center of the scene
+      inspectedCamera.position.set(0,40,180);
+      inspectedCamera.up = new THREE.Vector3(0,1,0);
+      inspectedCamera.lookAt(scene.position);
+
+      // add spotlight for the shadows
+      var directionalLight1 = new THREE.DirectionalLight( 0xffffff, 1.5, 800 );
+      directionalLight1.position.set(500,450,500);
+	  directionalLight1.castShadow = true;
+	  directionalLight1.shadowMapHeight = 2048;
+	  directionalLight1.shadowMapWidth = 2048;
+      scene.add(directionalLight1);
+
+      // add the output of the renderer to the html element
+      $('body').append(renderer.domElement);
+	 
+	  //define animations
+      var animator = null;
+      var duration = 10; // sec
+      var loopAnimation = true;
+
+      function initAnimator() {
+        animator = new KF.KeyFrameAnimator();
+        animator.init({ 
+          interps:
+            [
+			// FASE DI MOVIMENTO INIZIALE
+              { 
+                keys:[0, 0.025, 0.05, 0.075, 0.1, 0.125, 0.150, 0.175, 0.2,0.35,0.4,0.425,0.45,0.475,0.5,0.55,0.575,0.625,0.65,0.7,0.725], 
+                values:[
+                  { x : 200 , y: 0,z:0},
+                  { x : 170 , y: 20,z:0},
+                  { x : 140 , y:0,z:0},
+                  { x : 110 , y:20,z:0},
+				  { x : 80 , y: 0,z:0},
+                  { x : 50 , y: 20,z:0},
+                  { x : 20 , y:0,z:0},
+                  { x : -10 , y:20,z:0},
+				  { x : -40 , y:0,z:0},
+				  { x : -40 , y:0,z:0},
+				  //FASE DI AVVICINAMENTO
+				  { x : -40 , y:0,z:0},
+				  { x : -40 , y:0,z:0},
+				  { x : 0 , y:45,z:-25},
+				  { x : 30 , y:34,z:-50},
+				  //SCHIACCIARE LA LETTERA
+				  { x : 30 , y:28,z:-50},
+				  { x : 30 , y:38,z:-50},
+				  { x : 30 , y:22,z:-50},
+				  { x : 30 , y:42,z:-50},
+				  { x : 30 , y:22,z:-50},
+				  { x : 30 , y:50,z:-50},
+				  { x : 30 , y:0,z:-50},
+                ],
+                target: baseCompleta.position
+              },
+			  { 
+                keys:[0,0.475,0.5,0.55,0.575,0.625,0.65,0.7,0.725], 
+                values:[
+                  { x : 1 , y: 1,z:1},
+				  { x : 1 , y: 1,z:1},
+				  { x : 1 , y: 0.8,z:1},
+				  { x : 1 , y: 1,z:1},
+				  { x : 1 , y: 0.6,z:1},
+				  { x : 1 , y: 1,z:1},
+				  { x : 1 , y: 0.6,z:1},
+				  { x : 1 , y: 1,z:1},
+				  { x : 1 , y: 0,z:0},
+                ],
+                target: letterL.scale
+              },
+			  { 
+                keys:[0,0.3375,0.35,0.75,0.8], 
+                values:[
+				  { x : 0 , y: 0,z:0},
+                  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: -5*Math.PI/6,z:0},
+				  { x : 0 , y: -5*Math.PI/6,z:0},
+				  { x : 0 , y: -8*Math.PI/6,z:0},
+                ],
+                target: baseCompleta.rotation
+              },
+			  { 
+                keys:[0,0.0125, 0.025,0.0375, 0.05,0.0625, 0.075,0.0875, 0.1,0.1125, 0.125,0.1375, 0.15,0.1625, 0.175,0.1875, 0.2,0.425,0.45,0.475], 
+                values:[
+                  { x : 0 , y: 0,z:0},
+                  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:-Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:-Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+                  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:-Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:-Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:Math.PI/3},
+				  { x : 0 , y: 0,z:0},
+                ],
+                target: base.rotation
+              },
+			  { 
+                keys:[0,0.0125, 0.025,0.0375, 0.05,0.0625, 0.075,0.0875, 0.1,0.1125, 0.125,0.1375, 0.15,0.1625, 0.175,0.1875, 0.2,0.3,0.3125,0.4,0.425,0.45,0.5,0.55,0.575,0.625,0.65,0.7,0.725,0.75], 
+                values:[
+                  { x : 0 , y: 0,z:0},
+                  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:-Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:-Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+                  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:-Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:-Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  //FASE DI AVVICINAMENTO
+				  { x : 0 , y: 0,z:Math.PI/8},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  //SCHIACCIARE LA LETTERA
+				  { x : 0 , y: 0,z:Math.PI/6},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:-Math.PI/6},
+				  { x : 0 , y: 0,z:Math.PI/4},
+				  //FINE
+				  { x : 0 , y: 0,z:0},
+                ],
+                target: arm2.rotation
+              },
+			  { 
+                keys:[0,0.0125, 0.025,0.0375, 0.05,0.0625, 0.075,0.0875, 0.1,0.1125, 0.125,0.1375, 0.15,0.1625, 0.175,0.1875, 0.2,0.3,0.3125,0.325,0.3375,0.75,0.8], 
+                values:[
+                  { x : 0 , y: 0,z:0},
+                  { x : 0 , y: 0,z:-Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:-Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+                  { x : 0 , y: 0,z:-Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:-Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:Math.PI/4},
+				  { x : 0 , y: 0,z:0},
+				  //FASE DI AVVICINAMENTO
+				  { x : 0 , y: 0,z:Math.PI/7},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: 0,z:0},
+				  { x : 0 , y: -Math.PI/6,z:0},
+                ],
+                target: paralumeCompleto.rotation
+              },
+            ],
+          loop: loopAnimation,
+          duration: duration * 1000,
+          easing: TWEEN.Easing.Linear.None
+        });
+      }
+
+      initAnimator();
+
+      var controls = new function () {
+        this.showAxisHelper = true;
+		this.rotationArm1Y = 0;
+		this.rotationArm1Z = 0;
+		this.rotationArm2Z = 0;
+		this.rotationParalumeY = 0;
+		this.rotationParalumeZ = 0;
+		this.switch = true;
+		this.showTime = false;
+		this.inspectedCamera = false;
+      };
+
+      var gui = new dat.GUI();
+	  var rotationControlArm1Y = gui.add(controls, "rotationArm1Y",0,2*Math.PI);
+	  var rotationControlArm1Z = gui.add(controls, "rotationArm1Z",-Math.PI/4,Math.PI/4);
+	  var rotationControlArm2Z = gui.add(controls, "rotationArm2Z",-Math.PI/2,0);
+	  var rotationControlParalumeY = gui.add(controls, "rotationParalumeY",0,2*Math.PI);
+	  var rotationControlParalumeZ = gui.add(controls, "rotationParalumeZ",-Math.PI/3,Math.PI/7);
+	  var switchControl = gui.add(controls, 'switch');
+
+      render();
+	  
+	  switchControl.onChange(function (value) {
+		spotLight.intensity = 1.5;
+		pointLight.intensity = 10;
+		lampadina.material = new THREE.MeshLambertMaterial({color: 0xffffff, transparent: true, opacity: 1, side: THREE.BackSide});
+		renderer.clearTarget( spotLight.shadowMap );
+		spotLight.castShadow = true;
+		if(!value){
+			spotLight.intensity = 0;
+			pointLight.intensity = 0;
+			lampadina.material = new THREE.MeshLambertMaterial({color: 0xffffff, transparent: true, opacity: 0.3, side: THREE.FrontSide});;
+			spotLight.castShadow = false;
+			renderer.clearTarget( spotLight.shadowMap );
+			}
+	  });
+	  
+	  function reset(){
+		baseCompleta.position.set(0,0,0);
+		baseCompleta.rotation.set(0,0,0);
+		base.rotation.set(0,0,0);
+		arm1.rotation.set(0,0,0);
+		arm2.rotation.set(0,0,0);
+		paralumeCompleto.rotation.set(0,0,0);
+		letterL.scale.set(1,1,1);
+	  };
+	  
+	  var renderCamera = camera;
+	  var control = false;
+	  
+	  gui.add(controls, 'showTime').onChange(function (value) {
+		renderCamera = camera;
+		control = value;
+		animator.stop();
+		reset();
+		if(value){
+			renderCamera = inspectedCamera;
+			control = value;
+			animator.start();
+			}
+	  });
+	  
+
+      function render() {
+        stats.update();
+        trackballControls.update();
+		KF.update();
+		
+		if(!control){
+		arm1.rotation.y = controls.rotationArm1Y;
+		arm1.rotation.z = controls.rotationArm1Z;
+		arm2.rotation.z = controls.rotationArm2Z;
+		paralumeCompleto.rotation.y = controls.rotationParalumeY;
+		paralumeCompleto.rotation.z = controls.rotationParalumeZ;
+		}
+
+        // render using requestAnimationFrame
+        requestAnimationFrame(render);
+        renderer.render(scene, renderCamera);
+      }
+
+      function initStats() {
+        var stats = new Stats();
+        stats.setMode(0); // 0: fps, 1: ms
+        $('body').append(stats.domElement);
+        return stats;
+      }
+    });
+  </script>  
+ </body>
+</html>
