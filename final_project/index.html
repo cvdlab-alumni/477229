@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+ <head> 
+  <title>Playground</title> 
+  <style>
+    body{
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #stats {  /* Align stats top-left */
+      position: absolute;
+      left: 0px;
+      top: 0px;
+    }
+  </style> 
+  </head>
+  <body>
+   <video id="video" src="assets/movies/Big_Buck_Bunny_small.ogv" controls="false" autoplay="false"></video> 
+  <!-- JavaScript libraries -->
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> 
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/three.js/r67/three.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/stats.js/r11/Stats.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.5/dat.gui.min.js"></script>
+  <script src="assets/libs/TrackballControls.js"></script>
+  
+  <script src="assets/libs/THREEx.KeyboardState.js"></script>
+  
+  <script src="assets/libs/tween.min.js"></script>
+  <script src="assets/libs/keyframe.js"></script>
+  <script src="assets/libs/OBJLoader.js"></script>
+  <script src="assets/libs/MTLLoader.js"></script>
+  <script src="assets/libs/OBJMTLLoader.js"></script>
+  <script src="assets/libs/Tappezzeria.js"></script>
+  <script src="assets/libs/PorteEFinestre.js"></script>
+  <script src="assets/libs/ThreeCSG.js"></script>
+  <script src="assets/libs/Luci.js"></script>
+  <script src="assets/libs/Oggetti3D.js"></script>
+  <script src="assets/libs/VideoTV.js"></script>
+  <!-- Javascript code that runs our Three.js examples --> 
+  <script>
+  
+    var keyboard = new THREEx.KeyboardState();
+	var clock = new THREE.Clock();
+	var puntatoreCamera,camera,inspectedCamera,stats,trackballControls,webGLRenderer,texture,scene,renderCamera;
+  
+	init();
+	animate();
+    // once everything is loaded, we run our Three.js stuff.
+    function init() {
+
+      stats = initStats();
+
+      // create a scene, that will hold all our elements such as objects, cameras and lights.
+      scene = new THREE.Scene();
+
+      // create a camera, which defines where we're looking at.
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+      // create a inspectedCamera
+      inspectedCamera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
+	  
+	  // create trackball controls
+      trackballControls = new THREE.TrackballControls(camera);
+
+      // create a render and set the size
+      webGLRenderer = new THREE.WebGLRenderer();
+      webGLRenderer.setClearColor(new THREE.Color(0xaaaaaa, 1.0));
+      webGLRenderer.setSize(window.innerWidth, window.innerHeight);
+	 
+	  var tappezzeria = istanziaTappezzeria();
+	  scene.add(tappezzeria);
+	  
+	  var portaCamera1 = createPorta(-1);
+	  portaCamera1.rotation.y = -Math.PI/2;
+	  portaCamera1.position.set(15.5,1,3.5);
+	  scene.add(portaCamera1);
+	  
+	  var portaCamera2 = createPorta(-1);
+	  portaCamera2.position.set(37.5,1,8.5);
+	  scene.add(portaCamera2);
+	  
+	  var portaBagno = createPorta(1);
+	  portaBagno.position.set(27.5,1,8.5);
+	  scene.add(portaBagno);
+	  
+	  var portaCucina = createPorta(1);
+	  portaCucina.position.set(21.5,1,8.5);
+	  scene.add(portaCucina);
+	  
+	  var entrata = createEntrata();
+	  entrata.position.set(37,1,0.5);
+	  scene.add(entrata);
+	  
+	  var finestraCamera1 = createFinestra();
+	  finestraCamera1.position.set(8,5,15.5);
+	  scene.add(finestraCamera1);
+	  
+	  var finestraBagno = createFinestra();
+	  finestraBagno.position.set(20,5,22.5);
+	  finestraBagno.scale.x = 0.667;
+	  scene.add(finestraBagno);
+	  
+	  var finestraCucina = createFinestra();
+	  finestraCucina.position.set(29,5,22.5);
+	  finestraCucina.scale.x = 0.667;
+	  scene.add(finestraCucina);
+	  
+	  var finestraCamera21 = createFinestra();
+	  finestraCamera21.position.set(37.5,5,22.5);
+	  finestraCamera21.scale.x = 0.5;
+	  scene.add(finestraCamera21);
+	  
+	  var finestraCamera22 = createFinestra();
+	  finestraCamera22.position.set(44.5,5,22.5);
+	  finestraCamera22.scale.x = 0.5;
+	  scene.add(finestraCamera22);
+	  
+	  var lampadario1 = createLampadario();
+	  lampadario1.position.set(8,8.2,8);
+	  scene.add(lampadario1);
+	  
+	  var lampadario2 = createLampadario();
+	  lampadario2.position.set(30,8.2,4);
+	  scene.add(lampadario2);
+	  
+	  var lampadario3 = createLampadario();
+	  lampadario3.position.set(20,8.2,15);
+	  lampadario3.children[0].intensity = 2;
+	  scene.add(lampadario3);
+	  
+	  var lampadario4 = createLampadario();
+	  lampadario4.position.set(29,8.2,15);
+	  lampadario4.children[0].intensity = 0.8;
+	  scene.add(lampadario4);
+	  
+	  var lampadario5 = createLampadario();
+	  lampadario5.position.set(41,8.2,15);
+	  scene.add(lampadario5);
+	  
+	  //create a projector
+	  var projector = new THREE.Projector();
+      document.addEventListener('mousedown', onDocumentMouseDown, false);
+
+      // position and point the camera to the center of the scene
+      camera.position.set(-30,40,50);
+      camera.lookAt(new THREE.Vector3(0, 0, 0));
+	  
+	  inspectedCamera.position.set(0,0,0);
+      inspectedCamera.up = new THREE.Vector3(0,1,0);
+	  
+      var axisHelper = new THREE.AxisHelper(3);
+      scene.add(axisHelper);
+
+      $('body').append(webGLRenderer.domElement);
+
+      var step = 0;
+
+      var controls = new function () {
+		this.showAxisHelper = true;
+		this.showRay = false;
+		this.takeATour = false;
+	  };
+
+      var gui = new dat.GUI();
+      var mesh;
+	  var axis_control = gui.add(controls, 'showAxisHelper');
+	  var cameraControl = gui.add(controls, 'takeATour');
+	  
+	  axis_control.onChange(function (value) {
+        axisHelper.visible = value;
+      });
+	  
+	  renderCamera = camera;
+
+      cameraControl.onChange(function (value) {
+        renderCamera = value ? inspectedCamera : camera;
+      });
+	  
+	  var projector = new THREE.Projector();
+
+	  function onDocumentMouseDown(event) {
+	  
+        event.preventDefault();
+        var vector = new THREE.Vector3(( event.clientX / window.innerWidth ) * 2 - 1, -( event.clientY / window.innerHeight ) * 2 + 1, 0.5);
+		projector.unprojectVector(vector, renderCamera);
+		var raycaster = new THREE.Raycaster(renderCamera.position, vector.sub(renderCamera.position).normalize());
+
+        var intersects = raycaster.intersectObjects([portaBagno.children[1].children[1].children[0].children[0].children[1],
+													portaBagno.children[1].children[1].children[0].children[1].children[1],
+													portaCucina.children[1].children[1].children[0].children[0].children[1],
+													portaCucina.children[1].children[1].children[0].children[1].children[1],
+													portaCamera1.children[1].children[1].children[0].children[0].children[1],
+													portaCamera1.children[1].children[1].children[0].children[1].children[1],
+													portaCamera2.children[1].children[1].children[0].children[0].children[1],
+													portaCamera2.children[1].children[1].children[0].children[1].children[1],
+													entrata.children[1].children[1].children[0].children[0].children[1],
+													entrata.children[1].children[1].children[0].children[1].children[1],
+													finestraCamera1.children[1].children[1].children[1],
+													finestraBagno.children[1].children[1].children[1],
+													finestraCucina.children[1].children[1].children[1],
+													finestraCamera21.children[1].children[1].children[1],
+													finestraCamera22.children[1].children[1].children[1],
+													videoTV.children[0]
+													]);
+		
+        if (intersects.length > 0) {
+		  intersects[ 0 ].object.interact();
+        }
+      }
+	  
+	  var oggetti3D = creaOggetti();
+	  scene.add(oggetti3D);
+	  
+	  var videoTV = creaVideo();
+	  scene.add(videoTV);
+		
+		var targetGeometry = new THREE.BoxGeometry(1,1,1);
+		var targetMaterial = new THREE.MeshBasicMaterial({transparent:true, opacity:0});
+		targetCamera = new THREE.Mesh(targetGeometry,targetMaterial);
+		targetCamera.position.set(5,5,5);
+		scene.add(targetCamera);
+
+      function initStats() {
+        stats = new Stats();
+        stats.setMode(0); 
+        $('body').append(stats.domElement);
+        return stats;
+      }
+    };
+	
+	function animate() 
+{
+    requestAnimationFrame( animate );
+	render();		
+	update();
+}
+
+	function render() {
+		KF.update();
+        trackballControls.update();
+		
+		if (video.readyState === video.HAVE_ENOUGH_DATA) {
+              if (texture) texture.needsUpdate = true;
+          }
+        webGLRenderer.render(scene, renderCamera);
+      }
+	  
+	  function update(){
+	  
+		var delta = clock.getDelta();
+		var moveDistance = 10 *delta; 
+		var rotateAngle = Math.PI / 2*delta;  
+		
+		if ( keyboard.pressed("W") )
+			targetCamera.translateZ( -moveDistance );
+		if ( keyboard.pressed("S") )
+			targetCamera.translateZ(  moveDistance );
+		if ( keyboard.pressed("Q") )
+			targetCamera.translateX( -moveDistance );
+		if ( keyboard.pressed("E") )
+			targetCamera.translateX(  moveDistance );	
+
+		var rotation_matrix = new THREE.Matrix4().identity();
+		if ( keyboard.pressed("A") )
+			targetCamera.rotateOnAxis( new THREE.Vector3(0,1,0), rotateAngle);
+		if ( keyboard.pressed("D") )
+			targetCamera.rotateOnAxis( new THREE.Vector3(0,1,0), -rotateAngle);
+
+		var relativeCameraOffset = new THREE.Vector3(0,0,5);
+
+		var cameraOffset = relativeCameraOffset.applyMatrix4( targetCamera.matrixWorld );
+
+		inspectedCamera.position.x = cameraOffset.x;
+		inspectedCamera.position.y = cameraOffset.y;
+		inspectedCamera.position.z = cameraOffset.z;
+		inspectedCamera.lookAt( targetCamera.position );
+
+		stats.update();
+		}
+	  
+  </script>  
+ </body>
+</html>
